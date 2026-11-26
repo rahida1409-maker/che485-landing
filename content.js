@@ -3,27 +3,27 @@ window.__courseContent = {
   "schemaVersion": 1,
   "course": {
     "code": "CHE485",
-    "title": "Chemistry Laboratory",
-    "faculty": "FACULTY OF CHEMICAL ENGINEERING",
-    "institution": "UiTM",
+    "title": "CHEMISTRY LABORATORY",
+    "faculty": "FKK",
     "semester": "20264",
     "venue": "Chemistry Lab",
     "language": "en",
-    "lead": "This is where theoretical knowledge meets practical experience. Through laboratory experiments, you will explore chemical principles, develop practical skills, enhance critical thinking, and gain hands-on experience in a safe and supportive learning environment. Before starting any experiment, please familiarise yourself with the laboratory rules, safety procedures, and experimental guidelines. Explore, Experiment, Discover, and Learn! Wishing you an enjoyable and meaningful laboratory experience!"
+    "lead": "This is where theoretical knowledge meets practical experience. Through laboratory experiments, you will explore chemical principles, develop practical skills, enhance critical thinking, and gain hands-on experience in a safe and supportive learning environment. Before starting any experiment, please familiarise yourself with the laboratory rules, safety procedures, and experimental guidelines. Explore, Experiment, Discover, and Learn! Wishing you an enjoyable and meaningful laboratory experience!",
+    "institution": "UiTM"
   },
   "design": {
     "accent": "#0F766E",
     "hero": { "style": "art", "image": "assets/banner.jpg", "alt": "Describe your banner image here" },
     "themeToggle": true,
-    "theme": "light"
+    "theme": "dark"
   },
   "lecturer": {
     "name": "Dr. Rahida Wati Sharudin",
     "role": "Course lecturer",
-    "affiliation": "FKK, UiTM",
     "email": "rahida@uitm.edu.my",
     "photo": "assets/lecturer.jpg",
-    "introVideo": ""
+    "introVideo": "",
+    "affiliation": "FKK, UiTM"
   },
   "links": {
     "syllabus": "https://drive.google.com/file/d/1kT1ueh3BASXDX6C6_f_k1-_OKKcZIQSw/view?usp=sharing",
@@ -33,7 +33,7 @@ window.__courseContent = {
     "coverPages": "https://drive.google.com/drive/folders/1ZiJ6aCBRlqr_St1AnAulLxm5XvJAFX27?usp=sharing",
     "rubrics": "https://docs.google.com/spreadsheets/d/1IF0qS_3MmtbXfgPtnev0nCGAbTexLURs/edit?usp=sharing&ouid=112168098548211508819&rtpof=true&sd=true",
     "timetableA": "https://example.com/timetable-a",
-    "timetableB": "https://example.com/timetable-b"
+    "consultationquestions": "https://drive.google.com/drive/folders/1P8mLFGto5DuwYi3kR9EzofsdzNNYh1Ho?usp=sharing"
   },
   "startHere": {
     "kicker": "First things first",
@@ -104,18 +104,18 @@ window.__courseContent = {
       { "type": "brief", "week": 1, "note": "Safety Briefing" },
       { "type": "lab", "experiment": 1, "week": 2 },
       { "type": "consult", "experiment": 2, "week": 3 },
-      { "type": "lab", "experiment": 2, "week": 4 },
-      { "type": "consult", "experiment": 3, "week": 5, "submit": 1 },
-      { "type": "lab", "experiment": 3, "week": 6 },
+      { "type": "lab", "experiment": 2, "week": 4, "submit": 1 },
+      { "type": "consult", "experiment": 3, "week": 5 },
+      { "type": "lab", "experiment": 3, "week": 6, "submit": 2 },
       { "type": "break", "week": 7, "note": "Mid-semester break" },
-      { "type": "break", "week": 8, "note": "Mid-semester break" },
-      { "type": "consult", "week": 9, "experiment": 4, "submit": 3 },
+      { "type": "break", "submit": 3, "week": 8, "note": "Mid-semester break" },
+      { "type": "consult", "week": 9, "experiment": 4 },
       { "type": "lab", "week": 10, "experiment": 4 },
       { "type": "consult", "week": 11, "experiment": 5 },
       { "type": "lab", "week": 12, "experiment": 5, "submit": 4 },
-      { "type": "break", "week": null, "note": "MID SEM BREAK" },
-      { "type": "other", "week": 13, "submit": 5 },
-      { "type": "test", "week": 14, "note": "ONLINE TEST" }
+      { "type": "break", "week": 13, "note": "MID TERM BREAK" },
+      { "type": "submit", "week": 14, "submit": 5 },
+      { "type": "test", "week": 15, "note": "ONLINE" }
     ]
   },
   "experiments": {
@@ -124,13 +124,13 @@ window.__courseContent = {
     "intro": "Dates follow your class group. CE means closed-ended (fixed procedure). OE means open-ended (you plan your own).",
     "items": [
       {
+        "name": "Determination of concentration of acetic acid in vinegar",
         "short": "LAB 1",
         "openEnded": false,
         "co": "CO1",
         "report": "TR",
         "reportLabel": "Technical Report 1",
-        "manual": "materials",
-        "name": "Determination of concentration of acetic acid in vinegar"
+        "manual": "materials"
       },
       {
         "name": "Kinetic of chemical reaction – Iodination of cyclohexanone",
@@ -156,8 +156,7 @@ window.__courseContent = {
         "openEnded": false,
         "co": "CO1 · CO2",
         "report": "TR",
-        "reportLabel": "Technical Report 4",
-        "manual": "materials"
+        "reportLabel": "Technical Report 4"
       },
       {
         "name": "Determination of dye concentration using absorption spectroscopy",
@@ -165,8 +164,7 @@ window.__courseContent = {
         "openEnded": true,
         "co": "CO1 · CO2",
         "report": "LR",
-        "reportLabel": "Lab Report 5",
-        "manual": "materials"
+        "reportLabel": "Lab Report 5"
       }
     ]
   },
@@ -268,7 +266,7 @@ window.__courseContent = {
       { "title": "Academic integrity", "text": "Say what happens with late submission or plagiarism." }
     ]
   },
-  "supportIntro": { "kicker": "Contact and support", "title": "Dr. Rahida Wati Sharudin" },
+  "supportIntro": { "kicker": "Contact and support", "title": "Your lecturer" },
   "support": [
     {
       "title": "Cannot attend a class?",
