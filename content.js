@@ -3,7 +3,7 @@ window.__courseContent = {
   "schemaVersion": 1,
   "course": {
     "code": "CHE485",
-    "title": "Sample Course Name",
+    "title": "Chemistry Laboratory",
     "faculty": "FACULTY OF CHEMICAL ENGINEERING",
     "institution": "UiTM",
     "semester": "20264",
