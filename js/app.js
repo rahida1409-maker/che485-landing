@@ -21,6 +21,8 @@ var STR = {
     chooseGroup: 'Choose your class group', publicHoliday: 'Public holiday', markStepDone: 'Mark step done',
     helpful: 'Was this page helpful?', yes: 'Yes', no: 'Not really', thanks: 'Thank you for your feedback!',
     analyticsNote: 'This page records anonymous usage statistics (no personal data).',
+    toDark: 'Switch to dark mode', toLight: 'Switch to light mode',
+    creditBy: 'Template by Rahida Wati Sharudin · Faculty of Chemical Engineering, UiTM',
     video: 'Short introduction video', videoTitle: 'Short introduction video', photoOf: 'Photo of'
   },
   ms: {
@@ -38,6 +40,8 @@ var STR = {
     chooseGroup: 'Pilih kumpulan kelas anda', publicHoliday: 'Cuti umum', markStepDone: 'Tandakan langkah selesai',
     helpful: 'Adakah halaman ini membantu?', yes: 'Ya', no: 'Kurang', thanks: 'Terima kasih atas maklum balas anda!',
     analyticsNote: 'Halaman ini merekod statistik penggunaan tanpa nama (tiada data peribadi).',
+    toDark: 'Tukar ke mod gelap', toLight: 'Tukar ke mod cerah',
+    creditBy: 'Templat oleh Rahida Wati Sharudin · Fakulti Kejuruteraan Kimia, UiTM',
     video: 'Video pengenalan ringkas', videoTitle: 'Video pengenalan ringkas', photoOf: 'Foto'
   }
 };
@@ -45,9 +49,10 @@ var MON = {
   en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
   ms: ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis']
 };
-var BAR_COLORS = ['#12263F', '#0F766E', '#1D4ED8', '#92400E', '#6D28D9'];
+var BAR_LIGHT = ['#12263F', '#0F766E', '#1D4ED8', '#92400E', '#6D28D9'], BAR_DARK = ['#14532D', '#0F766E', '#155E75', '#854D0E', '#5B21B6'];
+function barColors() { return document.documentElement.getAttribute('data-theme') === 'dark' ? BAR_DARK : BAR_LIGHT; }
 var TONES = ['#0F766E', '#1D4ED8', '#92400E', '#6D28D9', '#BE123C', '#4A5B70'];
-var SECTION_ORDER = ['schedule', 'experiments', 'workflow', 'assessment', 'rules'];
+var SECTION_ORDER = ['experiments', 'schedule', 'workflow', 'assessment', 'rules'];
 
 var app = document.getElementById('app');
 var C = null, T = null, L = 'en', warnings = [];
@@ -102,13 +107,30 @@ function rgbOf(h) { h = h.replace('#', ''); if (h.length === 3) h = h.split('').
 function lum(c) { var a = c.map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2]; }
 function ratio(a, b) { var hi = Math.max(a, b), lo = Math.min(a, b); return (hi + 0.05) / (lo + 0.05); }
 function hex(c) { return '#' + c.map(function (v) { return ('0' + v.toString(16)).slice(-2); }).join(''); }
+function themeToggleOn() { return !(C.design && C.design.themeToggle === false); }
+function isDarkNow() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+function themeBtn() {
+  if (!themeToggleOn()) return '';
+  var d = isDarkNow(), ic = d
+    ? '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  return '<button type="button" class="themebtn" data-theme-toggle title="' + esc(t(d ? 'toLight' : 'toDark')) + '" aria-label="' + esc(t(d ? 'toLight' : 'toDark')) + '">' + ic + '</button>';
+}
 function applyAccent() {
+  var th = (C.design && C.design.theme) || 'light', isDark;
+  if (th !== 'light' && th !== 'dark') warn('design.theme must be light or dark.');
+  var pick = themeToggleOn() ? store('theme') : null;
+  if (pick === 'light' || pick === 'dark') th = pick;
+  isDark = th === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
   var h = (C.design && C.design.accent) || '#0F766E';
   if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(h)) { warn('design.accent must be a hex colour like #0F766E.'); h = '#0F766E'; }
+  if (isDark && h.toLowerCase() === '#0f766e') h = '#6EE7B7';
   var rgb = rgbOf(h), white = lum([255, 255, 255]), dark = lum([18, 38, 63]);
   var ink = ratio(lum(rgb), white) >= ratio(lum(rgb), dark) ? '#FFFFFF' : '#12263F';
   var txt = rgb.slice(), i = 0;
-  while (ratio(lum(txt), white) < 4.5 && i++ < 30) txt = txt.map(function (v) { return Math.round(v * 0.9); });
+  if (isDark) { var bg = lum([12, 18, 16]); while (ratio(lum(txt), bg) < 4.5 && i++ < 30) txt = txt.map(function (v) { return Math.min(255, Math.round(v + (255 - v) * 0.15)); }); }
+  else while (ratio(lum(txt), white) < 4.5 && i++ < 30) txt = txt.map(function (v) { return Math.round(v * 0.9); });
   var r = document.documentElement.style;
   r.setProperty('--accent', h); r.setProperty('--accent-ink', ink); r.setProperty('--accent-text', hex(txt));
 }
@@ -145,7 +167,8 @@ function validate() {
     else if (!Array.isArray(C.schedule.plan) || !C.schedule.plan.length) errs.push('schedule.plan is needed when "schedule" or "experiments" is on.');
     else C.schedule.groups.forEach(function (g, i) {
       if (!g.id) errs.push('schedule.groups[' + i + '].id is missing.');
-      if (!Array.isArray(g.dates) || g.dates.length !== C.schedule.plan.length) errs.push('schedule.groups[' + i + '].dates must have exactly ' + C.schedule.plan.length + ' dates (one for each entry in schedule.plan).');
+      var gp = (Array.isArray(g.plan) && g.plan.length) ? g.plan : C.schedule.plan, gpn = (gp === C.schedule.plan) ? 'schedule.plan' : 'schedule.groups[' + i + '].plan';
+      if (!Array.isArray(g.dates) || g.dates.length !== gp.length) errs.push('schedule.groups[' + i + '].dates must have exactly ' + gp.length + ' dates (one for each entry in ' + gpn + ').');
       else g.dates.forEach(function (d, j) { if (isNaN(iso(d).getTime()) || !/^\d{4}-\d{2}-\d{2}$/.test(d)) errs.push('schedule.groups[' + i + '].dates[' + j + '] "' + d + '" must look like 2027-01-31.'); });
     });
   }
@@ -179,12 +202,20 @@ function prep() {
   exps = (C.experiments && C.experiments.items) || [];
   reports = {};
   ((C.assessment && C.assessment.reports) || []).forEach(function (r) { reports[r.code] = r; });
+  indexPlan();
+}
+function indexPlan() {
   labIdx = {}; consIdx = {}; subIdx = {};
   plan.forEach(function (p, i) {
     if (p.type === 'lab') labIdx[p.experiment] = i;
     if (p.type === 'consult') consIdx[p.experiment] = i;
     if (p.submit) subIdx[p.submit] = i;
   });
+}
+function useGroup(g) {
+  var S = C.schedule || {};
+  plan = (g && Array.isArray(g.plan) && g.plan.length) ? g.plan : (Array.isArray(S.plan) ? S.plan : []);
+  indexPlan();
 }
 function exp(n) { return exps[n - 1] || { name: t('lab') + ' ' + n }; }
 function word() { return (C.experiments && C.experiments.word) || t('lab'); }
@@ -208,15 +239,26 @@ function fill(s, g) { return String(s == null ? '' : s).replace(/\{testDate\}/g,
 function section(id, alt, kick, title, intro, inner, pfx) {
   var P = !!(pfx && EDIT);
   return '<section class="sec' + (alt ? ' alt' : '') + '" id="' + id + '" aria-labelledby="t-' + id + '"><div class="wrap">' +
-    '<div class="head">' + ((kick || P) ? '<p class="kick"' + (P ? dp(pfx + '.kicker', 'Tajuk kecil') : '') + '>' + esc(kick) + '</p>' : '') + '<h2 id="t-' + id + '"' + (P ? dp(pfx + '.title', 'Tajuk bahagian') : '') + '>' + esc(title) + '</h2>' +
-    ((intro || P) ? '<p class="intro"' + (P ? dp(pfx + '.intro', 'Pengenalan bahagian') : '') + '>' + esc(intro) + '</p>' : '') + '</div>' + inner + '</div></section>';
+    '<div class="head">' + ((kick || P) ? '<p class="kick"' + (P ? dp(pfx + '.kicker', 'Subtitle') : '') + '>' + esc(kick) + '</p>' : '') + '<h2 id="t-' + id + '"' + (P ? dp(pfx + '.title', 'Section title') : '') + '>' + esc(title) + '</h2>' +
+    ((intro || P) ? '<p class="intro"' + (P ? dp(pfx + '.intro', 'Section intro') : '') + '>' + esc(intro) + '</p>' : '') + '</div>' + inner + '</div></section>';
 }
 function heroArt() {
-  return '<svg viewBox="0 0 360 300" width="360" height="300" aria-hidden="true"><rect width="360" height="300" rx="24" fill="var(--tint)"/>' +
-    '<circle cx="120" cy="140" r="78" fill="none" stroke="#12263F" stroke-width="3"/><circle cx="120" cy="140" r="44" fill="var(--accent)"/>' +
-    '<circle cx="250" cy="84" r="30" fill="#FCD9A0"/><circle cx="268" cy="212" r="46" fill="none" stroke="#12263F" stroke-width="3" stroke-dasharray="6 8"/>' +
-    '<path d="M120 140 L250 84 M120 140 L268 212" stroke="#12263F" stroke-width="2" fill="none"/>' +
-    '<rect x="24" y="250" width="132" height="10" rx="5" fill="#12263F" opacity=".15"/><rect x="24" y="268" width="84" height="10" rx="5" fill="#12263F" opacity=".15"/></svg>';
+  var P = 'M52 240 C 120 256 120 192 178 192 C 238 192 236 126 196 116 C 150 104 170 60 300 60';
+  function node(x, y, r, fill, icon) {
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + (r + 8) + '" style="fill:var(--accent);opacity:var(--art-glow)" opacity=".0"/>' +
+      '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" style="fill:var(' + fill + ');stroke:var(--ns);stroke-width:2.5"/>' + icon;
+  }
+  function ico(d, w) { return '<path d="' + d + '" fill="none" style="stroke:var(--ni)" stroke-width="' + (w || 3.5) + '" stroke-linecap="round" stroke-linejoin="round"/>'; }
+  function pill(x, y, w) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="16" rx="8" style="fill:var(--art-pill);stroke:var(--art-pills)" stroke-width="1.5"/>'; }
+  return '<svg viewBox="0 0 360 300" width="360" height="300" aria-hidden="true"><rect width="360" height="300" rx="24" style="fill:var(--art-bg)"/>' +
+    '<path d="' + P + '" fill="none" style="stroke:var(--art-path);opacity:var(--art-glow)" stroke-width="12" stroke-linecap="round"/>' +
+    '<path d="' + P + '" fill="none" style="stroke:var(--art-path)" stroke-width="3.5" stroke-dasharray="2 10" stroke-linecap="round"/>' +
+    pill(78, 262, 70) + pill(208, 216, 56) + pill(228, 142, 50) +
+    node(52, 240, 22, '--n1', ico('M45 250V231M45 231h15l-4 6 4 6H45', 3)) +
+    node(178, 192, 20, '--n2', ico('M169 192l6 6 11-12')) +
+    node(196, 116, 20, '--n3', ico('M187 116l6 6 11-12')) +
+    node(300, 60, 25, '--n4', '<path d="M300 45l4.5 9.5 10 1.3-7.4 7 2 10.2-9.1-5.2-9.1 5.2 2-10.2-7.4-7 10-1.3z" style="fill:var(--ni)"/>') +
+    '<circle cx="62" cy="64" r="9" style="fill:var(--art-dot)"/><circle cx="96" cy="42" r="5" style="fill:var(--art-pill)"/><circle cx="320" cy="236" r="7" style="fill:var(--art-pill)"/></svg>';
 }
 function initials(n) { return String(n || '?').replace(/^(dr|prof|prof\.|ts|ir|encik|puan|en|pn)\.?\s+/i, '').trim().split(/\s+/).slice(0, 2).map(function (w) { return w.charAt(0).toUpperCase(); }).join('') || '?'; }
 
@@ -224,7 +266,7 @@ function renderNav(ids) {
   var labels = { start: t('startHere'), links: t('quickLinks'), schedule: (C.schedule && C.schedule.navLabel) || t('schedule'), experiments: (C.experiments && C.experiments.navLabel) || t('experiments'), workflow: (C.workflow && C.workflow.navLabel) || t('workflow'), assessment: t('assessment'), rules: t('rules'), lecturer: t('lecturer') };
   var co = C.course;
   return '<header class="topbar"><nav class="nav" aria-label="Sections"><a class="brand" href="#home"><i aria-hidden="true"></i><b>' + esc(co.code) + '</b> <small>' + esc(co.title) + '</small></a><div class="tabs">' +
-    ids.map(function (id) { return '<a href="#' + id + '" data-sec="' + id + '">' + esc(labels[id] || id) + '</a>'; }).join('') + '</div></nav></header>';
+    ids.map(function (id) { return '<a href="#' + id + '" data-sec="' + id + '">' + esc(labels[id] || id) + '</a>'; }).join('') + themeBtn() + '</div></nav></header>';
 }
 
 function renderHero(g, cur) {
@@ -234,9 +276,9 @@ function renderHero(g, cur) {
   var cta = '<a class="btn primary" href="#start" data-track="start-here">' + esc(t('startHere')) + '</a>' +
     '<a class="btn ghost" href="#links">' + esc(t('quickLinks')) + '</a>';
   var h = '<section class="' + cls + '" id="home" aria-labelledby="h1"' + (style === 'image' ? ' data-img="' + esc(safeUrl(hero.image)) + '"' : '') + '><div class="wrap"><div class="hero-text">' +
-    '<p class="welcome"' + dp('course.welcome', 'Sambutan') + '>' + esc(co.welcome || t('welcome')) + '</p><p class="code"' + dp('course.code', 'Kod kursus') + '>' + esc(co.code) + '</p><h1 id="h1"' + dp('course.title', 'Tajuk kursus') + '>' + esc(co.title) + '</h1>' +
-    ((co.faculty || co.institution) ? '<p class="fac">' + esc([co.faculty, co.institution].filter(Boolean).join(' · ')) + '</p>' : '') +
-    ((co.lead || EDIT) ? '<p class="lead"' + dp('course.lead', 'Ayat pengenalan') + '>' + esc(co.lead || '') + '</p>' : '') + '<div class="cta">' + cta + '</div></div>' +
+    (co.welcome === '' && !EDIT ? '' : '<p class="welcome"' + dp('course.welcome', 'Greeting (optional)') + '>' + esc(co.welcome == null ? t('welcome') : co.welcome) + '</p>') + '<p class="code"' + dp('course.code', 'Course code') + '>' + esc(co.code) + '</p><h1 id="h1"' + dp('course.title', 'Course title') + '>' + esc(co.title) + '</h1>' +
+    ((co.faculty || co.institution || EDIT) ? '<p class="fac"><span' + dp('course.faculty', 'Faculty') + '>' + esc(co.faculty || '') + '</span>' + ((co.faculty && co.institution) || EDIT ? ' · ' : '') + '<span' + dp('course.institution', 'Institution') + '>' + esc(co.institution || '') + '</span></p>' : '') +
+    ((co.lead || EDIT) ? '<p class="lead"' + dp('course.lead', 'Intro sentence') + '>' + esc(co.lead || '') + '</p>' : '') + '<div class="cta">' + cta + '</div></div>' +
     (style === 'image' ? '' : '<div class="hero-art">' + (style === 'art' ? heroArt() : '') + '</div>') + '</div>';
   h += renderStrip(g, cur) + '</section>';
   return h;
@@ -245,9 +287,9 @@ function renderStrip(g, cur) {
   var co = C.course, items = [];
   if (g) { items.push([t('classGroup'), g.id]); items.push([t('session'), [g.day, g.time].filter(Boolean).join(', ')]); }
   else { items.push([t('code'), co.code]); if (co.session) items.push([t('session'), co.session]); }
-  if (co.venue) items.push([t('venue'), co.venue]);
-  if (co.semester) items.push([t('semester'), co.semester]);
-  var h = '<div class="strip">' + items.map(function (i) { return '<div><div class="l">' + esc(i[0]) + '</div><div class="v">' + esc(i[1]) + '</div></div>'; }).join('');
+  if (co.venue || EDIT) items.push([t('venue'), co.venue || '', 'course.venue']);
+  if (co.semester || EDIT) items.push([t('semester'), co.semester || '', 'course.semester']);
+  var h = '<div class="strip">' + items.map(function (i) { return '<div><div class="l">' + esc(i[0]) + '</div><div class="v"' + (i[2] ? dp(i[2], i[0]) : '') + '>' + esc(i[1]) + '</div></div>'; }).join('');
   if (g && sectionsOn.indexOf('schedule') > -1) h += weekCard(g, cur);
   return h + '</div>';
 }
@@ -278,7 +320,7 @@ function renderStart() {
   var done = []; try { done = JSON.parse(store('done') || '[]'); } catch (e) {}
   var list = steps.map(function (s, i) {
     var u = resolve(s.link), label = s.label || t('open'), okLink = !u || anchorOk(u);
-    return '<li class="step' + (done.indexOf(i) > -1 ? ' done' : '') + '" data-i="' + i + '"' + di('startHere.steps.' + i) + '><span class="n" aria-hidden="true">' + (i + 1) + '</span><div class="t"><b' + dp('startHere.steps.' + i + '.title', 'Tajuk langkah') + '>' + esc(s.title) + '</b>' + ((s.sub || EDIT) ? '<small' + dp('startHere.steps.' + i + '.sub', 'Penerangan langkah') + '>' + esc(EDIT ? (s.sub || '') : fill(s.sub, currentGroup())) + '</small>' : '') + '</div>' +
+    return '<li class="step' + (done.indexOf(i) > -1 ? ' done' : '') + '" data-i="' + i + '"' + di('startHere.steps.' + i) + '><span class="n" aria-hidden="true">' + (i + 1) + '</span><div class="t"><b' + dp('startHere.steps.' + i + '.title', 'Step title') + '>' + esc(s.title) + '</b>' + ((s.sub || EDIT) ? '<small' + dp('startHere.steps.' + i + '.sub', 'Step description') + '>' + esc(EDIT ? (s.sub || '') : fill(s.sub, currentGroup())) + '</small>' : '') + '</div>' +
       (s.link && okLink ? linkEl(u, s.link, label, 'go') : '') +
       '<button class="chk" type="button" role="checkbox" aria-checked="' + (done.indexOf(i) > -1) + '" aria-label="' + esc(t('markStepDone') + ': ' + s.title) + '"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l5 5L20 5"/></svg></button></li>';
   }).join('');
@@ -286,8 +328,8 @@ function renderStart() {
   if (pw.enabled === true && pwUrl) {
     list += '<li class="step prepwise"><div class="t"><b>' + esc(pw.label || 'PrepWISE') + '</b>' + (pw.text ? '<small>' + esc(pw.text) + '</small>' : '') + '</div>' + linkEl(pwUrl, 'prepwise', t('open') + ' ' + (pw.label || 'PrepWISE'), 'go') + '</li>';
   } else if (pw.enabled === true) warn('prepwise.enabled is true but prepwise.url is empty, so the PrepWISE card is hidden.');
-  return '<section class="sec" id="start" aria-labelledby="t-start"><div class="wrap"><div class="start"><div><p class="kick"' + dp('startHere.kicker', 'Tajuk kecil') + '>' + esc(S.kicker || t('firstThings')) + '</p><h2 id="t-start"' + dp('startHere.title', 'Tajuk bahagian') + '>' + esc(S.title || t('startHere')) + '</h2>' +
-    ((S.intro || EDIT) ? '<p class="intro"' + dp('startHere.intro', 'Pengenalan') + '>' + esc(S.intro || '') + '</p>' : '') + '</div><ol class="steps"' + dl('startHere.steps') + '>' + list + '</ol></div></div></section>';
+  return '<section class="sec" id="start" aria-labelledby="t-start"><div class="wrap"><div class="start"><div><p class="kick"' + dp('startHere.kicker', 'Subtitle') + '>' + esc(S.kicker || t('firstThings')) + '</p><h2 id="t-start"' + dp('startHere.title', 'Section title') + '>' + esc(S.title || t('startHere')) + '</h2>' +
+    ((S.intro || EDIT) ? '<p class="intro"' + dp('startHere.intro', 'Intro') + '>' + esc(S.intro || '') + '</p>' : '') + '</div><ol class="steps"' + dl('startHere.steps') + '>' + list + '</ol></div></div></section>';
 }
 
 function renderLinks() {
@@ -295,7 +337,7 @@ function renderLinks() {
   items.forEach(function (q, qi) {
     var u = resolve(q.link);
     if (u && !anchorOk(u) && !EDIT) return;
-    var inner = '<span class="t"' + dp('quickLinks.' + qi + '.title', 'Tajuk pautan') + '>' + esc(q.title) + '</span>' + ((q.hint || EDIT) ? '<span class="h"' + dp('quickLinks.' + qi + '.hint', 'Petunjuk') + '>' + esc(q.hint || '') + '</span>' : '') + '<span class="o">' + esc(u ? t('open') : t('soon')) + '</span>';
+    var inner = '<span class="t"' + dp('quickLinks.' + qi + '.title', 'Link title') + '>' + esc(q.title) + '</span>' + ((q.hint || EDIT) ? '<span class="h"' + dp('quickLinks.' + qi + '.hint', 'Hint') + '>' + esc(q.hint || '') + '</span>' : '') + '<span class="o">' + esc(u ? t('open') : t('soon')) + '</span>';
     out += u ? '<a class="ql"' + di('quickLinks.' + qi) + ' href="' + esc(u) + '"' + (isExternal(u) ? ' target="_blank" rel="noopener noreferrer"' : '') + ' data-track="' + esc(q.link) + '">' + inner + '</a>' : '<div class="ql off"' + di('quickLinks.' + qi) + ' aria-disabled="true">' + inner + '</div>';
   });
   return section('links', true, (C.quickLinksIntro && C.quickLinksIntro.kicker) || t('shortcuts'), (C.quickLinksIntro && C.quickLinksIntro.title) || t('quickLinks'), (C.quickLinksIntro && C.quickLinksIntro.intro) || '', '<div class="qgrid"' + dl('quickLinks') + '>' + out + '</div>', 'quickLinksIntro');
@@ -348,12 +390,16 @@ function renderExperiments(g) {
   var E = C.experiments, cards = '';
   exps.forEach(function (e, k) {
     var n = k + 1, wi = labIdx[n];
-    if (wi === undefined) { warn('Experiment ' + n + ' is not placed in schedule.plan (type "lab", experiment ' + n + ').'); return; }
+    if (wi === undefined) {
+      warn('Experiment ' + n + ' is not placed in schedule.plan (type "lab", experiment ' + n + ').');
+      if (EDIT) cards += '<li class="lab missing"><span class="atom" aria-hidden="true">' + (e.openEnded ? 'OE' : 'CE') + '</span><div><div class="wk">' + esc(word() + ' ' + n) + ' &middot; Not in schedule yet</div><h3>' + esc(e.name) + '</h3><p class="inf">Students will not see this lab until it is placed in the weekly plan.</p><button type="button" data-open="schedule">Open Schedule panel</button></div></li>';
+      return;
+    }
     var d = iso(g.dates[wi]), color = e.openEnded ? 'var(--c-oe)' : 'var(--c-ce)', inf = [];
     if (consIdx[n] !== undefined) inf.push('<b>' + esc(t('consult')) + '</b> ' + fmt(iso(g.dates[consIdx[n]])));
     if (subIdx[n] !== undefined) inf.push('<b>' + esc(t('submit') + ' ' + reportLabel(n)) + '</b> ' + fmt(iso(g.dates[subIdx[n]])) + (g.holidays && g.holidays[subIdx[n]] ? ' (' + esc(t('publicHoliday').toLowerCase()) + ')' : ''));
     var mu = resolve(e.manual);
-    cards += '<li class="lab" style="--c:' + color + '"><span class="atom" aria-hidden="true">' + n + '</span><div><div class="wk">' + esc(word() + ' ' + n + ' · ' + weekText(plan[wi]) + ' · ' + d.getDate() + ' ' + MON[L][d.getMonth()] + ' ' + d.getFullYear()) + '</div>' +
+    cards += '<li class="lab" style="--c:' + color + '"><span class="atom" aria-hidden="true">' + (e.openEnded ? 'OE' : 'CE') + '</span><div><div class="wk">' + esc((e.openEnded ? 'OE' : 'CE') + ' · ' + word() + ' ' + n + ' · ' + weekText(plan[wi]) + ' · ' + d.getDate() + ' ' + MON[L][d.getMonth()] + ' ' + d.getFullYear()) + '</div>' +
       '<h3>' + esc(e.name) + '</h3><div class="chips">' + chipsFor(n) + '</div>' + (inf.length ? '<p class="inf">' + inf.join(' &nbsp;·&nbsp; ') + '</p>' : '') +
       (mu ? linkEl(mu, e.manual, e.manualLabel || t('labManual'), 'mn') : '<span class="mn off">' + esc(t('manualSoon')) + '</span>') + '</div></li>';
   });
@@ -361,7 +407,7 @@ function renderExperiments(g) {
 }
 function renderWorkflow() {
   var W = C.workflow, steps = Array.isArray(W.steps) ? W.steps : [], cmp = W.compare, h = '';
-  h += '<ol class="flow"' + dl('workflow.steps') + '>' + steps.map(function (s, i) { var q = 'workflow.steps.' + i; return '<li' + di(q) + '>' + ((s.when || EDIT) ? '<div class="when"' + dp(q + '.when', 'Bila') + '>' + esc(s.when || '') + '</div>' : '') + '<h3' + dp(q + '.title', 'Tajuk') + '>' + esc(s.title) + '</h3>' + ((s.text || EDIT) ? '<p' + dp(q + '.text', 'Teks') + '>' + esc(s.text || '') + '</p>' : '') + '</li>'; }).join('') + '</ol>';
+  h += '<ol class="flow"' + dl('workflow.steps') + '>' + steps.map(function (s, i) { var q = 'workflow.steps.' + i; return '<li' + di(q) + '>' + ((s.when || EDIT) ? '<div class="when"' + dp(q + '.when', 'When') + '>' + esc(s.when || '') + '</div>' : '') + '<h3' + dp(q + '.title', 'Title') + '>' + esc(s.title) + '</h3>' + ((s.text || EDIT) ? '<p' + dp(q + '.text', 'Text') + '>' + esc(s.text || '') + '</p>' : '') + '</li>'; }).join('') + '</ol>';
   if (cmp && Array.isArray(cmp.columns)) {
     h += '<div class="vs">' + (cmp.title ? '<h3>' + esc(cmp.title) + '</h3>' : '') + '<div class="vs-cols">' + cmp.columns.map(function (c) {
       var img = safeUrl(c.image);
@@ -375,8 +421,8 @@ function renderAssessment(g) {
   var A = C.assessment, h = '', ws = Array.isArray(A.weights) ? A.weights : [];
   if (ws.length) {
     h += '<div class="mark" role="img" aria-label="' + esc(ws.map(function (w) { return w.label + ' ' + w.percent + '%'; }).join(', ')) + '">' +
-      ws.map(function (w, i) { return '<div style="flex:' + (+w.percent || 1) + ' 1 0;background:' + BAR_COLORS[i % BAR_COLORS.length] + '">' + esc(w.percent) + '%</div>'; }).join('') + '</div>' +
-      '<div class="mk-legend">' + ws.map(function (w, i) { return '<div style="flex-grow:' + (+w.percent || 1) + '"><i style="background:' + BAR_COLORS[i % BAR_COLORS.length] + '"></i><p><b' + dp('assessment.weights.' + i + '.label', 'Label') + '>' + esc(w.label) + '</b><span' + dp('assessment.weights.' + i + '.detail', 'Butiran') + '>' + esc(EDIT ? (w.detail || '') : fill(w.detail, g)) + '</span></p></div>'; }).join('') + '</div>';
+      ws.map(function (w, i) { return '<div style="flex:' + (+w.percent || 1) + ' 1 0;background:' + barColors()[i % barColors().length] + '">' + esc(w.percent) + '%</div>'; }).join('') + '</div>' +
+      '<div class="mk-legend">' + ws.map(function (w, i) { return '<div style="flex-grow:' + (+w.percent || 1) + '"><i style="background:' + barColors()[i % barColors().length] + '"></i><p><b' + dp('assessment.weights.' + i + '.label', 'Label') + '>' + esc(w.label) + '</b><span' + dp('assessment.weights.' + i + '.detail', 'Details') + '>' + esc(EDIT ? (w.detail || '') : fill(w.detail, g)) + '</span></p></div>'; }).join('') + '</div>';
   }
   var rs = Array.isArray(A.reports) ? A.reports : [];
   if (rs.length) {
@@ -394,19 +440,19 @@ function renderRules() {
   var R = C.rules, items = Array.isArray(R.items) ? R.items : (Array.isArray(R) ? R : []);
   return section('rules', true, R.kicker || t('rulesKick'), R.title || t('rules'), R.intro || '', '<ol class="rules"' + dl('rules.items') + '>' + items.map(function (r, i) {
     var q = 'rules.items.' + i;
-    return '<li class="rule"' + di(q) + ' style="--c:' + TONES[i % TONES.length] + '"><div class="no">' + ('0' + (i + 1)).slice(-2) + '</div><h3' + dp(q + '.title', 'Tajuk peraturan') + '>' + esc(r.title) + '</h3>' + ((r.text || EDIT) ? '<p' + dp(q + '.text', 'Teks peraturan') + '>' + esc(r.text || '') + '</p>' : '') + '</li>';
+    return '<li class="rule"' + di(q) + ' style="--c:' + TONES[i % TONES.length] + '"><div class="no">' + ('0' + (i + 1)).slice(-2) + '</div><h3' + dp(q + '.title', 'Rule title') + '>' + esc(r.title) + '</h3>' + ((r.text || EDIT) ? '<p' + dp(q + '.text', 'Rule text') + '>' + esc(r.text || '') + '</p>' : '') + '</li>';
   }).join('') + '</ol>', 'rules');
 }
 function renderLecturer() {
   var l = C.lecturer, photo = safeUrl(l.photo), vid = safeUrl(l.introVideo);
   var ph = '<div class="ph" id="ph" role="img" aria-label="' + esc(t('photoOf') + ' ' + l.name) + '">' + (photo ? '<img src="' + esc(photo) + '" alt="" onerror="this.remove()">' : '') + '<span aria-hidden="true">' + esc(initials(l.name)) + '</span></div>';
   if (photo) ph = ph.replace('<span aria-hidden="true">', '<span aria-hidden="true" class="ini">');
-  var card = '<div class="lec-card">' + ph + '<div><span class="tag">' + esc(t('courseLecturer')) + '</span><h3' + dp('lecturer.name', 'Nama pensyarah') + '>' + esc(l.name) + '</h3>' +
-    ((l.role || l.affiliation) ? '<p>' + esc([l.role, l.affiliation].filter(Boolean).join(' · ')) + '</p>' : '') + (l.email ? '<a href="mailto:' + esc(l.email) + '" data-track="email-lecturer">' + esc(l.email) + '</a>' : '') + '</div></div>';
+  var card = '<div class="lec-card">' + ph + '<div><span class="tag">' + esc(t('courseLecturer')) + '</span><h3' + dp('lecturer.name', 'Lecturer name') + '>' + esc(l.name) + '</h3>' +
+    ((l.role || l.affiliation || EDIT) ? '<p><span' + dp('lecturer.role', 'Position') + '>' + esc(l.role || '') + '</span>' + ((l.role && l.affiliation) || EDIT ? ' · ' : '') + '<span' + dp('lecturer.affiliation', 'Affiliation') + '>' + esc(l.affiliation || '') + '</span></p>' : '') + (l.email ? '<a href="mailto:' + esc(l.email) + '" data-track="email-lecturer">' + esc(l.email) + '</a>' : '') + '</div></div>';
   var v = vid ? '<div class="vid"><iframe title="' + esc(t('videoTitle')) + '" src="' + esc(vid) + '" allow="fullscreen" allowfullscreen loading="lazy"></iframe></div>' : '';
   var sup = Array.isArray(C.support) ? C.support : [];
   var tubes = (sup.length || EDIT) ? '<div class="tubes"' + dl('support') + '>' + sup.map(function (s, i) {
-    var u = s.link ? resolve(s.link) : '', c = TONES[i % TONES.length], inner = '<i style="background:' + c + '"></i><b' + dp('support.' + i + '.title', 'Tajuk sokongan') + '>' + esc(s.title) + '</b><span' + dp('support.' + i + '.text', 'Teks sokongan') + '>' + esc(s.text) + '</span>';
+    var u = s.link ? resolve(s.link) : '', c = TONES[i % TONES.length], inner = '<i style="background:' + c + '"></i><b' + dp('support.' + i + '.title', 'Support title') + '>' + esc(s.title) + '</b><span' + dp('support.' + i + '.text', 'Support text') + '>' + esc(s.text) + '</span>';
     return u ? '<a class="tb"' + di('support.' + i) + ' href="' + esc(u) + '"' + (isExternal(u) ? ' target="_blank" rel="noopener noreferrer"' : '') + ' data-track="' + esc(s.link === 'email' ? 'email-lecturer' : s.link) + '">' + inner + '</a>' : '<div class="tb"' + di('support.' + i) + '>' + inner + '</div>';
   }).join('') + '</div>' : '';
   var kick = (C.supportIntro && C.supportIntro.kicker) || t('contactSupport');
@@ -415,14 +461,20 @@ function renderLecturer() {
 }
 function renderFooter() {
   var co = C.course, txt = (C.footer && C.footer.text) || [co.code + ' ' + co.title, [co.faculty, co.institution].filter(Boolean).join(', '), co.semester].filter(Boolean).join(' · ');
-  return '<footer><div class="wrap"><p>' + esc(txt) + (gcOn ? ' · ' + esc(t('analyticsNote')) : '') + '</p></div></footer>';
+  var F = C.footer || {}, credit = '';
+  if (F.credit === true) {
+    var ctext = F.creditText || t('creditBy'), curl = safeUrl(F.creditUrl || 'https://doi.org/10.5281/zenodo.24213008');
+    credit = '<p class="credit">' + (curl ? '<a href="' + esc(curl) + '" target="_blank" rel="noopener">' + esc(ctext) + '</a>' : esc(ctext)) + '</p>';
+  }
+  return '<footer><div class="wrap"><p>' + esc(txt) + (gcOn ? ' · ' + esc(t('analyticsNote')) : '') + '</p>' + credit + '</div></footer>';
 }
 
 /* ---------- Render ---------- */
 function currentGroup() {
   if (!groups.length) return null;
-  var g = groups.filter(function (x) { return x.id === state.group; })[0];
-  return g || groups[0];
+  var g = groups.filter(function (x) { return x.id === state.group; })[0] || groups[0];
+  useGroup(g);
+  return g;
 }
 function render() {
   var g = currentGroup(), cur = g ? currentIndex(g) : -1;
@@ -432,8 +484,8 @@ function render() {
   var html = renderNav(ids);
   if (warnings.length && /[?&]debug\b/.test(location.search)) html += '<div class="warn" role="status"><b>content.json notes:</b> ' + warnings.map(esc).join(' · ') + '</div>';
   html += '<main id="main" tabindex="-1">' + renderHero(g, cur) + renderStart() + renderLinks();
-  if (sectionsOn.indexOf('schedule') > -1) html += renderSchedule(g, cur);
   if (sectionsOn.indexOf('experiments') > -1) html += renderExperiments(g);
+  if (sectionsOn.indexOf('schedule') > -1) html += renderSchedule(g, cur);
   if (sectionsOn.indexOf('workflow') > -1) html += renderWorkflow();
   if (sectionsOn.indexOf('assessment') > -1) html += renderAssessment(g);
   if (sectionsOn.indexOf('rules') > -1) html += renderRules();
@@ -470,6 +522,8 @@ function observe() {
   [].forEach.call(document.querySelectorAll('main > section'), function (s) { io.observe(s); });
 }
 document.addEventListener('click', function (e) {
+  var tb = e.target.closest && e.target.closest('[data-theme-toggle]');
+  if (tb) { store('theme', isDarkNow() ? 'light' : 'dark'); applyAccent(); var y0 = window.pageYOffset; render(); window.scrollTo(0, y0); var nb = document.querySelector('[data-theme-toggle]'); if (nb) nb.focus(); return; }
   var tr = e.target.closest && e.target.closest('[data-track]');
   if (tr) ev(tr.getAttribute('data-track'));
   var p = e.target.closest && e.target.closest('.pick');
@@ -502,7 +556,8 @@ window.__clp = {
   rerender: function () { var errs = validate(); if (errs.length) return errs; setup(); render(); return []; },
   validate: validate, warnings: function () { return warnings; }, resolve: resolve,
   anchors: function () { return ['#home', '#start', '#links'].concat(sectionsOn.map(function (k) { return '#' + k; }), ['#lecturer']); },
-  iso: iso, str: function () { return T; }
+  iso: iso, str: function () { return T; },
+  resetTheme: function () { try { window.localStorage.removeItem(slug(C.course.code) + ':theme'); } catch (e) {} }
 };
 function loadEditor() {
   if (window.__clpLoaded) return;
